@@ -26,8 +26,11 @@ glimpse(climas)
 ### Onde é mais quente?
 
 
-### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?  
+### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?
 
+```{r}
+
+```
 
 ### Quais os meses mais quentes e mais frios? 
 
@@ -45,4 +48,8 @@ Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva vari
 ### No geral, onde chove mais?
 
 ### A distribuição é diferente em meses específicos? 
+
+```{r}
+
+```
 
