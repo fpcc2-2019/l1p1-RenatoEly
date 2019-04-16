@@ -1,7 +1,9 @@
 ---
 title: "Limitações de sumários estatísticos"
-output: html_notebook
 theme: sandstone
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r warning=FALSE}

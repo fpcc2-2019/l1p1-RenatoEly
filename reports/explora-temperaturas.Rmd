@@ -11,6 +11,7 @@ library(tidyverse)
 library(here)
 library(lubridate)
 library(ggbeeswarm)
+library(reshape2)
 theme_set(theme_bw())
 ```
 
@@ -29,7 +30,11 @@ glimpse(climas)
 ### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?
 
 ```{r}
+temp <- melt(climas, measure.vars = c('tmax','tmedia'))
 
+ggplot(temp, aes(x=cidade, y=value, fill=cidade)) + 
+    geom_boxplot() +
+    facet_wrap(~variable, scale="free")
 ```
 
 ### Quais os meses mais quentes e mais frios? 
@@ -50,6 +55,38 @@ Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva vari
 ### A distribuição é diferente em meses específicos? 
 
 ```{r}
+
+chuvaMes <- climas %>% group_by(cidade, ano, mes) %>% summarise(chuva_cum = sum(chuva))
+chuvaMes <- chuvaMes[chuvaMes$ano > 2001,]
+
+ggplot(chuvaMes, aes(x=ano, y=chuva_cum, colour=cidade)) + 
+    geom_line() + 
+    facet_wrap(~factor(mes))
+```
+
+É possível perceber que o período mais chuvoso em ambas as cidades é entre os meses de Abril e Julho.
+Os meses mesnos chuvosos são os meses de Outubro a Dezembro.
+Em João Pessoa chove mais que em Campina Grande, com exceção de alguns meses em anos específicos como em fevereiro de 2004. A maior diferença é observada no mês de Junho, mês mais chuvoso em ambas as cidades.
+
+### Existe relação entre a chuva e a temperatura de cada mês?
+```{r}
+chuvaTemp <- climas %>% group_by(cidade, ano, mes) %>% summarise(chuva_sum = sum(chuva), tmedia = mean(tmedia))
+chuvaTemp <- chuvaTemp[chuvaTemp$ano > 2001,]
+
+ggplot(chuvaTemp, aes(x=ano, y=chuva_cum, colour=cidade)) + 
+    geom_line() + 
+    facet_wrap(~factor(mes))
+
+
+p <- ggplot(obs, aes(x = Timestamp))
+p <- p + geom_line(aes(y = air_temp, colour = "Temperature"))
+  
+# adding the relative humidity data, transformed to match roughly the range of the temperature
+p <- p + geom_line(aes(y = rel_hum/5, colour = "Humidity"))
+  
+# now adding the secondary axis, following the example in the help file ?scale_y_continuous
+# and, very important, reverting the above transformation
+p <- p + scale_y_continuous(sec.axis = sec_axis(~.*5, name = "Relative humidity [%]"))
 
 ```
 
