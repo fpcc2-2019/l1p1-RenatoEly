@@ -18,75 +18,93 @@ theme_set(theme_bw())
 ```{r read}
 climas = read_csv(here::here("data/clima_cg_jp-semanal.csv"), 
                   col_types = "cTdddddd")
-
-glimpse(climas)
 ```
 
 ## Temperatura
 
 ### Onde é mais quente?
-
-
-### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?
-
+Para essa questão duas visualizações foram feitas com o objetivo de verificar como os dados estão distribuídos.
+Para o gráfico de boxplot temos o seguinte:
 ```{r}
-temp <- melt(climas, measure.vars = c('tmax','tmedia'))
+temp <- melt(climas, measure.vars = c('tmax','tmedia','tmin'))
 
 ggplot(temp, aes(x=cidade, y=value, fill=cidade)) + 
     geom_boxplot() +
-    facet_wrap(~variable, scale="free")
+    labs(title = 'Variação da temperatura',
+         x = '',
+         y = 'Temperatura (ºC)') +
+    facet_wrap(~variable)
 ```
 
-### Quais os meses mais quentes e mais frios? 
+Comparando as temperaturas máximas de cada cidade as medianas de João Pessoa e Campina Grande são praticamente as mesmas, porém ao comparar as temperaturas médias e mínimas as temperaturas medianas em João Pessoa são mais altas, mas ainda existe uma sobreposição muito grande.
 
+Foi feita também uma visualização de linhas para verificar a mudança na temperatua ao longo do tempo nas duas cidades, porém para melhor visualizar os dados foram filtrados apenas os anos de 2016 em diante.
+```{r}
+temp <- temp[temp$ano >= 2016,]
+ggplot(temp, aes(x=semana, y=value, colour=cidade)) + 
+    geom_line() +
+    facet_wrap(~variable) +
+    labs(title = 'Variação da temperatura ao longo do tempo',
+         x = 'Data',
+         y = 'Temperatura (ºC)')
+```
 
-### Qual foi o São João  mais frio de CG que está nos nossos dados?
-
-
+Com exceção das temperaturas máximas, as temperaturas médias e mínimas não se sobrepõe e as temperatuas de João Pessoa estão em um nível mais elevado quando comparadas com as de Campina Grande no mesmo período.
 
 ## Chuva
 
-### Quanto chove por semana em JP e CG?
-
-Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva varia mais ou menos que a temperatura? O formato da distribuição é igual? 
-
-### No geral, onde chove mais?
-
 ### A distribuição é diferente em meses específicos? 
 
+Para verificar a distribuição da chuva em cada mês, foi calculado o acumulado mensal e para a visualização foram filtrados apenas os anos de 2002 em diante, para visualizar melhor os dados.
 ```{r}
 
 chuvaMes <- climas %>% group_by(cidade, ano, mes) %>% summarise(chuva_cum = sum(chuva))
-chuvaMes <- chuvaMes[chuvaMes$ano > 2001,]
+chuvaMes <- chuvaMes[chuvaMes$ano > 2002,]
 
 ggplot(chuvaMes, aes(x=ano, y=chuva_cum, colour=cidade)) + 
     geom_line() + 
-    facet_wrap(~factor(mes))
+    facet_wrap(~factor(mes)) +
+    labs(title = 'Variação do nível de chuva em cada mês',
+         x = 'Ano',
+         y = 'Nível de chuva (mm)')
 ```
 
-É possível perceber que o período mais chuvoso em ambas as cidades é entre os meses de Abril e Julho.
-Os meses mesnos chuvosos são os meses de Outubro a Dezembro.
-Em João Pessoa chove mais que em Campina Grande, com exceção de alguns meses em anos específicos como em fevereiro de 2004. A maior diferença é observada no mês de Junho, mês mais chuvoso em ambas as cidades.
+É possível perceber que o período mais chuvoso em ambas as cidades é entre os meses de Abril e Julho e os meses mesnos chuvosos são os meses de Outubro a Dezembro.
+Geralmente, em João Pessoa chove mais que em Campina Grande, com exceção de alguns meses em anos específicos como em fevereiro de 2004. A maior diferença é observada no mês de Junho que é o mês mais chuvoso em ambas as cidades.
 
 ### Existe relação entre a chuva e a temperatura de cada mês?
+
+Para verificar essa relação, primeiro foram separados os dados de cada cidade e após isso, os foi feito um scaterplot entre a menor temperatura máxima de cada mês/ano e quanto choveu nesse mesmo período.
 ```{r}
-chuvaTemp <- climas %>% group_by(cidade, ano, mes) %>% summarise(chuva_sum = sum(chuva), tmedia = mean(tmedia))
+chuvaTemp <- climas %>% group_by(cidade, ano, mes) %>% summarise(chuva_sum = sum(chuva), tmax = min(tmax))
 chuvaTemp <- chuvaTemp[chuvaTemp$ano > 2001,]
-
-ggplot(chuvaTemp, aes(x=ano, y=chuva_cum, colour=cidade)) + 
-    geom_line() + 
-    facet_wrap(~factor(mes))
-
-
-p <- ggplot(obs, aes(x = Timestamp))
-p <- p + geom_line(aes(y = air_temp, colour = "Temperature"))
-  
-# adding the relative humidity data, transformed to match roughly the range of the temperature
-p <- p + geom_line(aes(y = rel_hum/5, colour = "Humidity"))
-  
-# now adding the secondary axis, following the example in the help file ?scale_y_continuous
-# and, very important, reverting the above transformation
-p <- p + scale_y_continuous(sec.axis = sec_axis(~.*5, name = "Relative humidity [%]"))
 
 ```
 
+```{r}
+chuvaTempCG <- chuvaTemp[chuvaTemp$cidade == "Campina Grande",]
+
+ggplot(chuvaTempCG, aes(x=chuva_sum, y=tmax)) + 
+    geom_point() +
+    labs(title = 'Temperatura máxima X chuva',
+         x = 'Nível de chuva (mm)',
+         y = 'Temperatura (ºC)')
+```
+
+```{r}
+chuvaTempJP <- chuvaTemp[chuvaTemp$cidade == "João Pessoa",]
+
+ggplot(chuvaTempJP, aes(x=chuva_sum, y=tmax)) + 
+    geom_point() +
+    labs(title = 'Temperatura máxima X chuva',
+         x = 'Nível de chuva (mm)',
+         y = 'Temperatura (ºC)')
+```
+
+Comparando os dois gráficos é possível perceber que em João Pessoa os dados estão mais dispersos e em Campina Grande existe uma concentração maior de pontos na parte superior esquerda, meses mais quentes e menos chuvosos, enquanto os pontos mais a direita, meses mais chuvosos, estão mais abaixo se comparados com os meses mais chuvosos de João Pessoa, indicando que a relação entre temperatura e chuva em Campina Grande é mais forte que em João Pessoa. Para verificar se isso acontece, foi realizado o calculo do coeficiente de correlação para cada município.
+```{r}
+cor(chuvaTempJP$chuva_sum, chuvaTempJP$tmax)
+cor(chuvaTempCG$chuva_sum, chuvaTempCG$tmax)
+```
+
+Em ambos os casos a correlação é negativa, indicando que quanto maior a temperatura menor a quantidade de chuva. Em João Pessoa essa correlação é mais próxima de 0, quando comparada com a de Campina Grande, indicando uma correlação mais fraca.
